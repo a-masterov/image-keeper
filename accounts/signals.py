@@ -12,4 +12,5 @@ def create_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_profile(sender, instance, **kwargs):
     """Save the profile when the user is saved"""
-    instance.profile.save()
+    if hasattr(instance, 'profile'):
+        instance.profile.save()

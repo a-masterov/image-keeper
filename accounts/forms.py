@@ -16,8 +16,7 @@ class UserRegistrationForm(UserCreationForm):
         
         if commit:
             user.save()
-            # Create a profile for the user
-            Profile.objects.create(user=user)
+            # Profile creation is now handled by the signal
             
         return user
 
