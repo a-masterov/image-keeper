@@ -53,12 +53,14 @@ def retrieve_image_as_lo(oid):
         # Make sure we have a transaction
         with conn.cursor() as cursor:
             try:
-                lobject = conn.lobject(oid, 'rb')
+                # Convert string OID to integer for PostgreSQL
+                oid_int = int(oid) if isinstance(oid, str) else oid
+                lobject = conn.lobject(oid_int, 'rb')
                 data = lobject.read()
                 lobject.close()
                 return data
-            except (psycopg2.errors.InvalidParameterValue, AttributeError):
-                # Handle case where the large object doesn't exist
+            except (psycopg2.errors.InvalidParameterValue, AttributeError, ValueError, TypeError):
+                # Handle case where the large object doesn't exist or conversion fails
                 return None
     else:
         # For SQLite, retrieve the image from the filesystem
@@ -80,10 +82,12 @@ def delete_image_lo(oid):
         # Make sure we have a transaction
         with conn.cursor() as cursor:
             try:
-                lobject = conn.lobject(oid, 'wb')
+                # Convert string OID to integer for PostgreSQL
+                oid_int = int(oid) if isinstance(oid, str) else oid
+                lobject = conn.lobject(oid_int, 'wb')
                 lobject.unlink()
-            except (psycopg2.errors.InvalidParameterValue, AttributeError):
-                # Handle case where the large object doesn't exist
+            except (psycopg2.errors.InvalidParameterValue, AttributeError, ValueError, TypeError):
+                # Handle case where the large object doesn't exist or conversion fails
                 pass
     else:
         # For SQLite, delete the image from the filesystem
