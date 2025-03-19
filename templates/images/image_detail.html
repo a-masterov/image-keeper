@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ image.title }} - Image Keeper{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <img src="{% url 'image_view' image.id %}" class="img-fluid image-detail" alt="{{ image.title }}">
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>{{ image.title }}</h2>
+            </div>
+            <div class="card-body">
+                {% if image.description %}
+                <p>{{ image.description }}</p>
+                {% endif %}
+                
+                <p><strong>Uploaded by:</strong> {{ image.owner.username }}</p>
+                <p><strong>Upload date:</strong> {{ image.uploaded_at|date:"F d, Y" }}</p>
+                <p><strong>File size:</strong> {{ image.file_size|filesizeformat }}</p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'image_download' image.id %}" class="btn btn-success">Download</a>
+                    {% if user == image.owner %}
+                    <a href="{% url 'image_delete' image.id %}" class="btn btn-danger">Delete</a>
+                    {% endif %}
+                    <a href="{% url 'image_list' %}" class="btn btn-secondary">Back to Gallery</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
