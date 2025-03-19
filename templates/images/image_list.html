@@ -22,7 +22,7 @@
                     <small class="text-muted">Uploaded by {{ image.owner.username }} on {{ image.uploaded_at|date:"M d, Y" }}</small>
                 </p>
                 <a href="{% url 'image_detail' image.id %}" class="btn btn-sm btn-primary">View</a>
-                {% if user == image.owner %}
+                {% if user == image.owner or user.is_superuser %}
                 <a href="{% url 'image_delete' image.id %}" class="btn btn-sm btn-danger">Delete</a>
                 {% endif %}
             </div>

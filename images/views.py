@@ -98,7 +98,11 @@ def image_view(request, image_id):
 
 @login_required
 def image_delete(request, image_id):
-    image = get_object_or_404(Image, id=image_id, owner=request.user)
+    # Allow superusers to delete any image, but regular users can only delete their own
+    if request.user.is_superuser:
+        image = get_object_or_404(Image, id=image_id)
+    else:
+        image = get_object_or_404(Image, id=image_id, owner=request.user)
     
     if request.method == 'POST':
         # Delete the large objects

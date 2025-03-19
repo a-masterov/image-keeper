@@ -23,7 +23,7 @@
                 
                 <div class="d-grid gap-2">
                     <a href="{% url 'image_download' image.id %}" class="btn btn-success">Download</a>
-                    {% if user == image.owner %}
+                    {% if user == image.owner or user.is_superuser %}
                     <a href="{% url 'image_delete' image.id %}" class="btn btn-danger">Delete</a>
                     {% endif %}
                     <a href="{% url 'image_list' %}" class="btn btn-secondary">Back to Gallery</a>
