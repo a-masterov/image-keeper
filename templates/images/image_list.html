@@ -14,7 +14,7 @@
     <div class="col-md-4 mb-4">
         <div class="card h-100">
             <a href="{% url 'image_detail' image.id %}">
-                <img src="{% url 'image_view' image.id %}" class="card-img-top image-thumbnail" alt="{{ image.title }}">
+                <img src="{% url 'thumbnail_view' image.id %}" class="card-img-top image-thumbnail" alt="{{ image.title }}">
             </a>
             <div class="card-body">
                 <h5 class="card-title">{{ image.title }}</h5>

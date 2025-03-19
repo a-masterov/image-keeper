@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.db import transaction
 from .models import Image
 from .forms import ImageUploadForm
-from .utils import store_image_as_lo, retrieve_image_as_lo, delete_image_lo
+from .utils import store_image_as_lo, retrieve_image_as_lo, delete_image_lo, generate_thumbnail
 
 @login_required
 def image_list(request):
@@ -47,6 +47,12 @@ def image_upload(request):
             with transaction.atomic():
                 # Store the image data in a large object
                 oid = store_image_as_lo(image_data)
+                
+                # Generate and store thumbnail
+                thumbnail_data = generate_thumbnail(image_data)
+                if thumbnail_data:
+                    thumbnail_oid = store_image_as_lo(thumbnail_data)
+                    image.thumbnail_oid = thumbnail_oid
                 
                 # Save the OID in the image model
                 image.image_oid = oid
@@ -95,8 +101,10 @@ def image_delete(request, image_id):
     image = get_object_or_404(Image, id=image_id, owner=request.user)
     
     if request.method == 'POST':
-        # Delete the large object
+        # Delete the large objects
         delete_image_lo(image.image_oid)
+        if image.thumbnail_oid:
+            delete_image_lo(image.thumbnail_oid)
         
         # Delete the image record
         image.delete()
@@ -105,3 +113,22 @@ def image_delete(request, image_id):
         return redirect('image_list')
     
     return render(request, 'images/image_confirm_delete.html', {'image': image})
+
+@login_required
+def thumbnail_view(request, image_id):
+    image = get_object_or_404(Image, id=image_id)
+    
+    # If thumbnail doesn't exist, use the original image
+    if not image.thumbnail_oid:
+        return redirect('image_view', image_id=image.id)
+    
+    # Retrieve the thumbnail data from the large object
+    image_data = retrieve_image_as_lo(image.thumbnail_oid)
+    
+    if not image_data:
+        raise Http404("Thumbnail not found")
+    
+    # Create a response with the thumbnail data
+    response = HttpResponse(image_data, content_type=image.content_type)
+    
+    return response

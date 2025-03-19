@@ -13,6 +13,9 @@ class Image(models.Model):
     # or a file ID for SQLite
     image_oid = models.CharField(max_length=255, null=True)
     
+    # Thumbnail OID for faster gallery loading
+    thumbnail_oid = models.CharField(max_length=255, null=True)
+    
     # Metadata for the image
     content_type = models.CharField(max_length=100, default='image/jpeg')
     file_size = models.BigIntegerField(default=0)
