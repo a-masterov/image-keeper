@@ -19,9 +19,11 @@ def store_image_as_lo(image_data):
     or store in filesystem for SQLite
     """
     if is_postgres():
-        conn = connection.connection
-        # Make sure we have a transaction
-        with conn.cursor() as cursor:
+        # Use atomic transaction to ensure we have a transaction context
+        from django.db import transaction
+        
+        with transaction.atomic():
+            conn = connection.connection
             # Create a large object
             lobject = conn.lobject(0, 'wb')
             oid = lobject.oid
@@ -48,19 +50,24 @@ def retrieve_image_as_lo(oid):
     or from filesystem for SQLite
     """
     if is_postgres():
-        conn = connection.connection
+        # Convert string OID to integer for PostgreSQL
+        try:
+            oid_int = int(oid) if isinstance(oid, str) else oid
+        except (ValueError, TypeError):
+            return None
+            
+        # Use atomic transaction to ensure we have a transaction context
+        from django.db import transaction
         
-        # Make sure we have a transaction
-        with conn.cursor() as cursor:
+        with transaction.atomic():
+            conn = connection.connection
             try:
-                # Convert string OID to integer for PostgreSQL
-                oid_int = int(oid) if isinstance(oid, str) else oid
                 lobject = conn.lobject(oid_int, 'rb')
                 data = lobject.read()
                 lobject.close()
                 return data
-            except (psycopg2.errors.InvalidParameterValue, AttributeError, ValueError, TypeError):
-                # Handle case where the large object doesn't exist or conversion fails
+            except (psycopg2.errors.InvalidParameterValue, AttributeError, psycopg2.ProgrammingError):
+                # Handle case where the large object doesn't exist
                 return None
     else:
         # For SQLite, retrieve the image from the filesystem
@@ -77,17 +84,22 @@ def delete_image_lo(oid):
     or delete from filesystem for SQLite
     """
     if is_postgres():
-        conn = connection.connection
+        # Convert string OID to integer for PostgreSQL
+        try:
+            oid_int = int(oid) if isinstance(oid, str) else oid
+        except (ValueError, TypeError):
+            return
+            
+        # Use atomic transaction to ensure we have a transaction context
+        from django.db import transaction
         
-        # Make sure we have a transaction
-        with conn.cursor() as cursor:
+        with transaction.atomic():
+            conn = connection.connection
             try:
-                # Convert string OID to integer for PostgreSQL
-                oid_int = int(oid) if isinstance(oid, str) else oid
                 lobject = conn.lobject(oid_int, 'wb')
                 lobject.unlink()
-            except (psycopg2.errors.InvalidParameterValue, AttributeError, ValueError, TypeError):
-                # Handle case where the large object doesn't exist or conversion fails
+            except (psycopg2.errors.InvalidParameterValue, AttributeError, psycopg2.ProgrammingError):
+                # Handle case where the large object doesn't exist
                 pass
     else:
         # For SQLite, delete the image from the filesystem
